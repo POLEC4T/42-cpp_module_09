@@ -6,7 +6,7 @@
 /*   By: mniemaz <mniemaz@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/12 06:13:28 by miloniemaz        #+#    #+#             */
-/*   Updated: 2025/11/13 15:42:09 by mniemaz          ###   ########.fr       */
+/*   Updated: 2025/11/14 10:11:35 by mniemaz          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ bool ftStrToT(T& val, std::string& str) {
 	return (true);
 }
 
-/**\
+/**
  * date must be YYYY-M(M)-D(D)
  */
 bool isDateValid(std::string& date) {
@@ -120,6 +120,10 @@ int BitcoinExchange::parseFile(const std::string& filename, t_file_type filetype
 	float value;
 	std::string line;
 	getline(data, line);
+	if (line != (filetype == DB ? "date,exchange_rate" : "date | value")) {
+		std::cerr << "Error: bad header => " << line << std::endl;
+		return (EXIT_FAILURE);
+	}
 
 	size_t delimpos;
 	while (getline(data, line)) {
@@ -148,7 +152,9 @@ int BitcoinExchange::parseFile(const std::string& filename, t_file_type filetype
 				continue ;
 			return (EXIT_FAILURE);
 		}
-		if (filetype == INPUT) {
+		if (filetype == DB)
+			_db.insert(std::make_pair(date, value));
+		else /* if (filetype == INPUT) */ {
 			if (value > 1000) {
 				std::cerr << "Error: too large a number" << std::endl;
 				continue;
@@ -157,28 +163,18 @@ int BitcoinExchange::parseFile(const std::string& filename, t_file_type filetype
 				std::cerr << "Error: not a positive number" << std::endl; 
 				continue ;
 			}
-		}
-		if (filetype == DB)
-			_db.insert(std::make_pair(date, value));
-		else /* if type == INPUT */ {
-			std::map<std::string, float>::iterator it;
+			std::map<std::string, float>::iterator lowbound;
 			
-			it = _db.lower_bound(date);
-			bool isBeforeLowest = it == _db.begin() && it->first != date;
+			lowbound = _db.lower_bound(date);
+			bool isBeforeLowest = lowbound == _db.begin() && lowbound->first != date;
 			if (isBeforeLowest) {
 				std::cerr << "Error: no date available before " << date << std::endl;
 				continue;
 			}
-
-			bool isAfterGreatest = it == _db.end();
-
-			if (isAfterGreatest || it->first != date)
-				--it;
-
-			// 2012-01-11 => 1 = 7.1
-			
-			
-			std::cout << date << " => " << value << " = " << value * it->second << std::endl;
+			bool isAfterGreatest = lowbound == _db.end();
+			if (isAfterGreatest || lowbound->first != date)
+				--lowbound;
+			std::cout << date << " => " << value << " = " << value * lowbound->second << std::endl;
 		}
 	}
 
