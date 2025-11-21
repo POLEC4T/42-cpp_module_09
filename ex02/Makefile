@@ -7,9 +7,9 @@ CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -ggdb3
 SRC_FILES =\
 	main.cpp\
-	PmergeMe.cpp\
 
 INC_FILES =\
+	PmergeMe.tpp\
 	PmergeMe.hpp\
 
 SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))

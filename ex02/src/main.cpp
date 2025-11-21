@@ -1,3 +1,4 @@
+
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
@@ -6,43 +7,84 @@
 /*   By: mniemaz <mniemaz@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/14 15:12:17 by mniemaz           #+#    #+#             */
-/*   Updated: 2025/11/14 16:02:10 by mniemaz          ###   ########.fr       */
+/*   Updated: 2025/11/17 13:11:22 by mniemaz          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "PmergeMe.hpp"
+#include <iostream>
 #include <cstdlib>
-#include <vector>
+#include <sstream>
+#include <limits>
+#include <algorithm>
+#include <deque>
+
 
 /**
- * todo : optimize with memoization
+ * @brief puts str into val.
+ * str must be of type T, otherwise returns EXIT_FAILURE.
+ * @example "42" -> true, "42abc" -> false
  */
-std::vector<unsigned long> getJacobsthalNums(size_t limitIter) {
-	std::vector<unsigned long> nums;
-	if (limitIter == 0)
-		return (nums);
-	nums.push_back(0);
-	if (limitIter == 1)
-		return (nums);
-	nums.push_back(1);
-	for (size_t i = 2; i < limitIter; i++)
-		nums.push_back(nums[i - 1] + 2 * nums[i - 2]);
-	return (nums);
+template <typename T>
+void ftStrToT(T& val, std::string& str) {
+	std::istringstream iss(str);
+	iss >> val;
+	if (iss.fail() || !iss.eof())
+		throw std::invalid_argument("Error: " + str + " conversion failed");
 }
 
+std::vector<long> parseArgv(char **av) {
 
-#include <iostream>
+	std::vector<long> vec;
+	long val;
+	std::string str;
+
+	for (size_t i = 0; av[i]; ++i) {
+		str = av[i];
+		if (str.size() && !isdigit(str.at(0)))
+			throw std::invalid_argument("Error: positive number required: " + str);
+		ftStrToT<long>(val, str);
+		if (std::find(vec.begin(), vec.end(), val) != vec.end())
+			throw std::invalid_argument("Error: invalid argument: " + str + " can't be added twice");
+		vec.push_back(val);
+	}
+	return (vec);
+}
 
 
 int main(int ac, char **av) {
 
-	if (ac != 2) {
+	if (ac < 2) {
+		std::cout << "Usage: ./PmergeMe 1 2 3" << std::endl;
 		return (EXIT_FAILURE);
 	}
-	std::vector<unsigned long> jacobsthal = getJacobsthalNums(std::atoi(av[1]));
-	for (size_t i = 0; i < jacobsthal.size(); i++)
-		std::cout << jacobsthal[i] << " ";
-	std::cout << std::endl;
-	
+
+	std::vector<long> args;
+	try {
+		args = parseArgv(av + 1);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		return (EXIT_FAILURE);
+	}
+
+	try {
+		std::vector<long> vecArgs(args.begin(), args.end());
+		std::deque<long> deqArgs(args.begin(), args.end());
+
+		PmergeMe< std::vector<long> >::printContainer("Before:\t", vecArgs, -1, "");
+
+		double elapsedTimeVec = PmergeMe< std::vector<long> >::FJASort(vecArgs);
+		double elapsedTimeDeq = PmergeMe< std::deque<long> >::FJASort(deqArgs);
+
+		PmergeMe< std::vector<long> >::printContainer("After:\t", vecArgs, -1, "");
+
+		std::cout << "Time to process a range of " << args.size() << " elements with std::vector: " << elapsedTimeVec << " us" << std::endl;
+		std::cout << "Time to process a range of " << args.size() << " elements with std::deque: " << elapsedTimeDeq << " us" << std::endl;
+
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		return (EXIT_FAILURE);
+	}
 
 	return (EXIT_SUCCESS);
 }
