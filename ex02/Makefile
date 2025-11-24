@@ -4,7 +4,7 @@ OBJ_DIR = obj
 
 NAME = PmergeMe
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98 -ggdb3
+CFLAGS = -Wall -Wextra -Werror -std=c++98
 SRC_FILES =\
 	main.cpp\
 

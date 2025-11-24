@@ -22,15 +22,16 @@
 
 /**
  * @brief puts str into val.
- * str must be of type T, otherwise returns EXIT_FAILURE.
- * @example "42" -> true, "42abc" -> false
+ * @exception throws invalid_argument if str is not of type T, or if there are extra characters.
  */
 template <typename T>
-void ftStrToT(T& val, std::string& str) {
+T ftStrToT(std::string& str) {
+	T val;
 	std::istringstream iss(str);
 	iss >> val;
 	if (iss.fail() || !iss.eof())
 		throw std::invalid_argument("Error: " + str + " conversion failed");
+	return val;
 }
 
 std::vector<long> parseArgv(char **av) {
@@ -43,7 +44,7 @@ std::vector<long> parseArgv(char **av) {
 		str = av[i];
 		if (str.size() && !isdigit(str.at(0)))
 			throw std::invalid_argument("Error: positive number required: " + str);
-		ftStrToT<long>(val, str);
+		val = ftStrToT<long>(str);
 		if (std::find(vec.begin(), vec.end(), val) != vec.end())
 			throw std::invalid_argument("Error: invalid argument: " + str + " can't be added twice");
 		vec.push_back(val);

@@ -6,7 +6,7 @@
 /*   By: mniemaz <mniemaz@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/14 15:12:20 by mniemaz           #+#    #+#             */
-/*   Updated: 2025/11/21 17:48:49 by mniemaz          ###   ########.fr       */
+/*   Updated: 2025/11/24 12:50:18 by mniemaz          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,8 +63,8 @@ void PmergeMe<Container>::_swapItValues(typename Container::iterator it1, typena
 
 /**
  * @brief reverse a part of a container
- * @note ite is `last of cont to rev` + 1
- * @example it becomes ite, it + 1 becomes ite - 1 etc
+ * @note ite is `last of cont to rev` + 1 => ite is not included in the part to reverse
+ * @example it becomes ite - 1, it + 1 becomes ite - 2 etc
  */
 template<typename Container>
 void PmergeMe<Container>::_reverseContPart(typename Container::iterator& it, typename Container::iterator& ite) {
@@ -78,6 +78,14 @@ void PmergeMe<Container>::_reverseContPart(typename Container::iterator& it, typ
 	}
 }
 
+/**
+ * @brief get the jacobsthal order for size elements
+ * @returns a container with the indices in jacobsthal order
+ * 														0 1 2 3 4 5 6
+ * @example size = 7: jacob = [(0,1,)1,3,5] => returns [0,2,1,4,3,6,5]
+ * @details Jacobsthal numbers gives intervals to to reverse parts of the
+ * 			initial ordered indices to get the jacobsthal order.
+ */
 template<typename Container>
 Container PmergeMe<Container>::_getJacobsthalOrder(long size) {
 	Container jacob;
@@ -104,7 +112,6 @@ Container PmergeMe<Container>::_getJacobsthalOrder(long size) {
 	for (size_t i = 0; i < (size_t)size; ++i)
 		order.push_back(i);
 
-
 	for (size_t i = 0; i < jacob.size() - 1; ++i) {
 		typename Container::iterator start = order.begin() + jacob[i];
 		typename Container::iterator end = order.begin() + jacob[i + 1];
@@ -119,22 +126,20 @@ Container PmergeMe<Container>::_getJacobsthalOrder(long size) {
 
 template<typename Container>
 void PmergeMe<Container>::_setMainAndPending(Container& cont, Container& main, Container& pending) {
-	// sort pairs themselves
+	Container unsortedBigs;
+	// sort pairs themselves and fill unsortedBigs 
 	for (typename Container::iterator it = cont.begin(); it < cont.end(); it += 2) {
 		if (*(it + 1) > *it)
 			_swapItValues(it + 1, it);
+		unsortedBigs.push_back(*it);
 	}
-	
-	Container bigs;
-	for (typename Container::iterator bigIt = cont.begin(); bigIt < cont.end(); bigIt += 2)
-		bigs.push_back(*bigIt);
 
-	main = _processSort(bigs);
+	main = _processSort(unsortedBigs);
 
 	for (typename Container::iterator it = main.begin(); it < main.end(); ++it) {
 		typename Container::iterator bigIt = std::find(cont.begin(), cont.end(), *it);
-		typename Container::value_type& small = *(bigIt + 1);
-		pending.push_back(small);
+		typename Container::value_type& smallVal = *(bigIt + 1);
+		pending.push_back(smallVal);
 	}
 }
 
@@ -143,10 +148,12 @@ void PmergeMe<Container>::_fillMainInOrder(Container& main, Container& pending, 
 	Container order = _getJacobsthalOrder(pending.size());
 
 	if (PRINT_LOGS) {
-		std::cout << "\n===RECURSIVE CALL===" << std::endl;
+		std::cout << "\n### RECURSIVE CALL ###" << std::endl;
 		printContainer("jacobsthal order:\t", order, -1, "");
 		printContainer("pending:\t\t", pending, -1, "");
 		printContainer("main:\t\t\t", main, -1, "");
+		if (lastSingleNum != -1)
+			std::cout << "last single num:\t" << lastSingleNum << std::endl;
 		std::cout << "\nfirst pending always pos 0 because always smaller than his big:" << std::endl;
 	}
 
@@ -160,8 +167,8 @@ void PmergeMe<Container>::_fillMainInOrder(Container& main, Container& pending, 
 	}
 	
 	for (size_t i = 1; i < order.size(); ++i) {
-		typename Container::iterator bigit = std::find(main.begin(), main.end(), constMain[order[i]]);
-		_insertValSorted(main, pending[order[i]], main.begin(), bigit);
+		typename Container::iterator bigIt = std::find(main.begin(), main.end(), constMain[order[i]]);
+		_insertValSorted(main, pending[order[i]], main.begin(), bigIt);
 	}
 
 	if (lastSingleNum != -1) {
@@ -173,7 +180,7 @@ void PmergeMe<Container>::_fillMainInOrder(Container& main, Container& pending, 
 
 /**
  * @returns the iterator of the lowest in the above range of val (where it should be inserted)
- * @example val = 3, list = [1,2,4] => returns the iterator of 4 
+ * @example val = 3, container = [1,2,4] => returns the iterator of 4 
  */
 template<typename Container>
 typename Container::iterator PmergeMe<Container>::_binarySearch(typename Container::iterator first, typename Container::iterator last, const long& val) {
@@ -199,8 +206,7 @@ size_t getNumSize(long num) {
 	oss << num;
 	if (oss.fail())
 		throw std::invalid_argument("Error: getNumSize throw");
-	std::string str(oss.str());
-	return (str.size());
+	return (oss.str().size());
 	
 }
 
