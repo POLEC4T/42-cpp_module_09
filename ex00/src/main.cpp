@@ -6,7 +6,7 @@
 /*   By: mniemaz <mniemaz@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/12 06:13:30 by miloniemaz        #+#    #+#             */
-/*   Updated: 2025/11/13 15:43:42 by mniemaz          ###   ########.fr       */
+/*   Updated: 2025/11/24 13:11:37 by mniemaz          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,14 +20,14 @@ int main(int ac, char **av) {
 		std::cerr << "Usage: ./btc inputfile" << std::endl;
 		return (EXIT_FAILURE);
 	}
-	char *input = av[1];
+	char *inputFileName = av[1];
 	BitcoinExchange be;
 
 	if (be.parseFile(DBFILENAME, DB) == EXIT_FAILURE) {
 		return (EXIT_FAILURE);
 	}
 
-	if (be.parseFile(input, INPUT) == EXIT_FAILURE) {
+	if (be.parseFile(inputFileName, INPUT) == EXIT_FAILURE) {
 		return (EXIT_FAILURE);
 	}
 
